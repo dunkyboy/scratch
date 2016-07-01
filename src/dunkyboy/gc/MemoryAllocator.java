@@ -3,6 +3,10 @@ package dunkyboy.gc;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.text.NumberFormat.getNumberInstance;
 import static java.util.Locale.US;
@@ -15,9 +19,22 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public class MemoryAllocator {
 
     public static void main(String[] args) {
-        new MemoryAllocator( new SequentialByteArrayBuilder(), 5000 ).start();
+//        new MemoryAllocator( new SequentialByteArrayBuilder(), 5000 ).start();
+        new MemoryAllocator(
+            () ->  // one per thread
+                new NonThreadsafeRollingBufferAccumulatingByteArrayBuilder(
+                    new SequentialByteArrayBuilder(),
+                    1000000
+                )
+            ,
+            50
+        ).start();
     }
 
+    @FunctionalInterface
+    public interface ArrayBuilderFactory {
+        ByteArrayBuilder getBuilder();
+    }
 
     public interface ByteArrayBuilder {
         byte[] build(int size);
@@ -26,11 +43,11 @@ public class MemoryAllocator {
 
     static abstract class AbstractByteArrayBuilder implements ByteArrayBuilder {
 
-        protected long count = 0;
+        protected final AtomicLong count = new AtomicLong();
 
         @Override
         public long getCount() {
-            return count;
+            return count.get();
         }
     }
 
@@ -47,13 +64,8 @@ public class MemoryAllocator {
             byte[] bytes = new byte[size];
             for (int i = 0; i < bytes.length; i++)
                 bytes[i] = theByte;
-            count++;
+            count.incrementAndGet();
             return bytes;
-        }
-
-        @Override
-        public long getCount() {
-            return 0;
         }
     }
 
@@ -66,7 +78,7 @@ public class MemoryAllocator {
             byte[] bytes = new byte[size];
             for (int i = 0; i < bytes.length; i++)
                 bytes[i] = theByte++;
-            count++;
+            count.incrementAndGet();
             return bytes;
         }
     }
@@ -79,14 +91,14 @@ public class MemoryAllocator {
         public byte[] build(final int size) {
             byte[] bytes = new byte[size];
             rand.nextBytes(bytes);
-            count++;
+            count.incrementAndGet();
             return bytes;
         }
     }
 
     static class AccumulatingByteArrayBuilder implements ByteArrayBuilder {
 
-        private final List<byte[]> byteArrays = new LinkedList<>();  // growing should cause steady heap increase, not jerky like ArrayList
+        private final Queue<byte[]> byteArrays = new ConcurrentLinkedQueue<>();  // basically a concurrent LinkedList
 
         private final ByteArrayBuilder builder;
 
@@ -107,55 +119,137 @@ public class MemoryAllocator {
         }
     }
 
+    static class RollingBufferAccumulatingByteArrayBuilder implements ByteArrayBuilder {
 
-    private final ByteArrayBuilder byteArrayBuilder;
+        private final Queue<byte[]> byteArrays = new ConcurrentLinkedQueue<>();  // basically a concurrent LinkedList
+
+        private final ByteArrayBuilder builder;
+
+        private final int maxSize;
+
+        RollingBufferAccumulatingByteArrayBuilder(ByteArrayBuilder builder, int maxSize) {
+            this.builder = builder;
+            this.maxSize = maxSize;
+        }
+
+        @Override
+        public byte[] build(final int size) {
+            byte[] bytes = builder.build(size);
+            byteArrays.add(bytes);
+
+            while (byteArrays.size() > maxSize)
+                byteArrays.remove();  // racy, but just needs to be "close enough", so don't care
+
+            return bytes;
+        }
+
+        @Override
+        public long getCount() {
+            return builder.getCount();
+        }
+    }
+
+    static class NonThreadsafeRollingBufferAccumulatingByteArrayBuilder implements ByteArrayBuilder {
+
+        private final List<byte[]> byteArrays = new LinkedList<>();
+
+        private final ByteArrayBuilder builder;
+
+        private final int maxSize;
+
+        NonThreadsafeRollingBufferAccumulatingByteArrayBuilder(ByteArrayBuilder builder, int maxSize) {
+            this.builder = builder;
+            this.maxSize = maxSize;
+        }
+
+        @Override
+        public byte[] build(final int size) {
+            byte[] bytes = builder.build(size);
+            byteArrays.add(bytes);
+
+            while (byteArrays.size() > maxSize)
+                byteArrays.remove(0);
+
+            return bytes;
+        }
+
+        @Override
+        public long getCount() {
+            return builder.getCount();
+        }
+    }
+
+
+    private final ArrayBuilderFactory byteArrayBuilders;
 
     private final int byteArraySize;
 
-    private long bytesAllocated;  // force compiler to not optimize away my byte[]s!
+    private final AtomicLong bytesAllocated = new AtomicLong();
 
-    public MemoryAllocator(ByteArrayBuilder byteArrayBuilder, int byteArraySize) {
-        this.byteArrayBuilder = byteArrayBuilder;
+    public MemoryAllocator(ArrayBuilderFactory byteArrayBuilders, int byteArraySize) {
+        this.byteArrayBuilders = byteArrayBuilders;
         this.byteArraySize = byteArraySize;
     }
 
     public void start() {
-        System.out.println( "Generating byte arrays" +
-            "\n  builder:    " + byteArrayBuilder.getClass().getSimpleName() +
+
+        final int threadCount = Runtime.getRuntime().availableProcessors();
+
+        System.out.println( "Generating byte arrays in " + threadCount + " threads" +
+            "\n  builder:    " + byteArrayBuilders.getBuilder().getClass().getSimpleName() +
             "\n  array size: " + byteArraySize +
             "\n  heap max:   " + humanReadableByteCount(Runtime.getRuntime().maxMemory())
         );
 
         printGcInfo();
-
         System.out.println();
 
-        long startTimeNanos = System.nanoTime();
 
-        long currentSecond = 0;
+        final long startTimeNanos = System.nanoTime();
 
-        while (true) {
-            byte[] bytes = byteArrayBuilder.build(byteArraySize);
-            bytesAllocated += bytes.length;
+        final Lock printLock = new ReentrantLock();  // only one thread should print
 
-            long arrayCount = byteArrayBuilder.getCount();
+        for (int i = 0; i < threadCount; i++) {
+            new Thread("AllocatorThread-"+i) {
+                @Override
+                public void run() {
 
-            long elapsedNanos = System.nanoTime() - startTimeNanos;
-            long elapsedSecs = NANOSECONDS.toSeconds(elapsedNanos);
-            if (elapsedSecs > currentSecond) {
-                currentSecond = elapsedSecs;
+                    final boolean isPrinting = printLock.tryLock();
+                    System.out.println("[" + Thread.currentThread().getName() + "] initialized - I am " + (isPrinting?"":"not ") + "printing");
 
-                double elapsedSeconds = (double) (elapsedNanos / 1000000) / 1000.0d;
-                double throughput = bytesAllocated / elapsedSeconds;
+                    if (isPrinting)
+                        System.out.println();
 
-                System.out.println(
-                    "arrays built: " + getNumberInstance(US).format(arrayCount) + ", " +
-                    "elapsed: "      + elapsedSeconds + " secs, " +
-                    "allocated: "    + humanReadableByteCount(bytesAllocated) + ", " +
-                    "heap: "         + humanReadableByteCount(Runtime.getRuntime().totalMemory()) + ", " +
-                    "throughput: "   + humanReadableByteCount(throughput) + " / sec"
-                );
-            }
+                    final ByteArrayBuilder builder = byteArrayBuilders.getBuilder();  // one builder per thread
+
+                    long currentSecond = 0;
+                    while (true) {
+                        byte[] bytes = builder.build(byteArraySize);
+                        long currentBytesAllocated = bytesAllocated.addAndGet(bytes.length);
+
+                        long arrayCount = builder.getCount();
+
+                        long elapsedNanos = System.nanoTime() - startTimeNanos;
+                        long elapsedSecs = NANOSECONDS.toSeconds(elapsedNanos);
+                        if (elapsedSecs > currentSecond) {
+                            currentSecond = elapsedSecs;
+
+                            if (isPrinting) {
+                                double elapsedSecondsExact = (double) (elapsedNanos / 1000000) / 1000.0d;
+                                double throughputBytesPerSec = currentBytesAllocated / elapsedSecondsExact;
+
+                                System.out.println(
+                                    "arrays built: "   + getNumberInstance(US).format(arrayCount) + ", " +
+                                        "elapsed: "    + elapsedSecs + " secs, " +
+                                        "allocated: "  + humanReadableByteCount(currentBytesAllocated) + ", " +
+                                        "heap: "       + humanReadableByteCount(Runtime.getRuntime().totalMemory()) + ", " +
+                                        "throughput: " + humanReadableByteCount(throughputBytesPerSec) + " / sec"
+                                );
+                            }
+                        }
+                    }
+                }
+            }.start();
         }
     }
 
