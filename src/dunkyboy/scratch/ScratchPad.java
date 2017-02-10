@@ -1,6 +1,7 @@
 package dunkyboy.scratch;
 
 import dunkyboy.util.RunningAverage;
+import dunkyboy.util.ThreadsafeRunningAverage;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 import javax.crypto.SecretKeyFactory;
@@ -46,9 +47,9 @@ public class ScratchPad {
 
         List<byte[]> bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork = new ArrayList<>(1000);  // capped to keep heap usage reasonable
 
-        RunningAverage averageElapsedNanos = new RunningAverage();
+        ThreadsafeRunningAverage averageElapsedNanos = new ThreadsafeRunningAverage();
         IntStream.range(0, numTestIterations)
-            //.parallel()
+            .parallel()
             .forEach( i -> {
                 long startNanos = System.nanoTime();
                 byte[] hash = generateHash(password, salt, numHashAlgoIterations, 160);
