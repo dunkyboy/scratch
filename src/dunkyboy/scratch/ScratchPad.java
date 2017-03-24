@@ -1,12 +1,11 @@
 package dunkyboy.scratch;
 
-import dunkyboy.util.RunningAverage;
 import dunkyboy.util.ThreadsafeRunningAverage;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.ArrayList;
@@ -33,29 +32,31 @@ public class ScratchPad {
 
         long methodStartNanos = System.nanoTime();
 
-        final int numHashAlgoIterations = 10000;
-        final int numTestIterations = 10000;
+        final int numHashAlgoIterations = 10_000;
+        final int numTestIterations = 10_000;
 
         final String password = "e43b16b3a2fb8e8b63b57a6ab4c13da5";  // example real MMS key (cloud-dev)
 
-        byte[] salt = new byte[16];
-        ThreadLocalRandom.current().nextBytes(salt);
+        byte[] salt = new byte[8];
+        new SecureRandom().nextBytes(salt);
+
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
 
         // warm up the VM
-        for (int i = 0; i < 1000; i++)
-            generateHash(password, salt, numHashAlgoIterations, 160);
+        for (int i = 0; i < 1_000; i++)
+            generateHash(factory, password, salt, numHashAlgoIterations, 160);
 
-        List<byte[]> bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork = new ArrayList<>(1000);  // capped to keep heap usage reasonable
+        List<byte[]> bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork = new ArrayList<>(1_000);  // capped to keep heap usage reasonable
 
         ThreadsafeRunningAverage averageElapsedNanos = new ThreadsafeRunningAverage();
         IntStream.range(0, numTestIterations)
-            .parallel()
+//            .parallel()
             .forEach( i -> {
                 long startNanos = System.nanoTime();
-                byte[] hash = generateHash(password, salt, numHashAlgoIterations, 160);
+                byte[] hash = generateHash(factory, password, salt, numHashAlgoIterations, 160);
                 long elapsedNanos = System.nanoTime() - startNanos;
 
-                if (bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork.size() == 1000) {
+                if (bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork.size() == 1_000) {
                     bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork.clear();
                 }
                 bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork.add(hash);
@@ -73,12 +74,10 @@ public class ScratchPad {
         System.out.println("  (buffer size for compiler's benefit: " + bufferOfHashResultsToEnsureCompilerDoesntOptimizeMyWork.size() + ")");
     }
 
-    private static byte[] generateHash(String password, byte[] salt, int numIterations, int keyLength) {
+    private static byte[] generateHash(SecretKeyFactory factory, String password, byte[] salt, int numIterations, int keyLength) {
         try {
             KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, numIterations, keyLength);
-            SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-
-            return f.generateSecret(spec).getEncoded();
+            return factory.generateSecret(spec).getEncoded();
         } catch (Exception e) {
             throw new RuntimeException(e);  // sigh, Java
         }
