@@ -46,7 +46,7 @@ public class KeyFactoryBenchmark {
 
         final long startNanos = System.nanoTime();
 
-        final byte[] salt = new byte[8];
+        final byte[] salt = new byte[16];
         new SecureRandom().nextBytes(salt);
 
         SecretKeyFactory factory = SecretKeyFactory.getInstance(keyAlgo);

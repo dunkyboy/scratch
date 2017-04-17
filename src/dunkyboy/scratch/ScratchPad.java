@@ -1,6 +1,8 @@
 package dunkyboy.scratch;
 
+import com.amazonaws.util.CodecUtils;
 import dunkyboy.util.ThreadsafeRunningAverage;
+import org.apache.commons.codec.binary.Base64;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -23,8 +25,21 @@ public class ScratchPad {
 
     public static void main(String[] args) throws Exception {
 
-        testHashGenerationRuntime();
 
+        testRandomSaltBase64();
+
+//        testHashGenerationRuntime();
+
+
+    }
+
+    private static void testRandomSaltBase64() {
+
+        byte[] saltBytes = new byte[8];
+        new SecureRandom().nextBytes(saltBytes);
+        String base64 = Base64.encodeBase64String(saltBytes);
+
+        System.out.println("input: " + new String(saltBytes) + ", output: " + base64);
 
     }
 
