@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Rumored Google interview question: Using only a function returning a random number between 1 and 5, implement a
  * function returning a random number between 1 and 7.
  */
-public class GoogleRngQuestien {
+public class GoogleRngQuestion {
 
     public static void main(String[] args) {
         testGoogleRNG();

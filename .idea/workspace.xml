@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c7882a88-b423-497f-91f4-45bb1d82e8ed" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestien.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/dunkyboy/scratch/ScratchPad.java" afterPath="$PROJECT_DIR$/src/dunkyboy/scratch/ScratchPad.java" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestien.java" afterPath="$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestion.java" />
     </list>
     <ignored path="scratch.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -47,11 +45,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="GoogleRngQuestien.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestien.java">
+      <file leaf-file-name="GoogleRngQuestion.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestion.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="10" column="3" lean-forward="false" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
+            <state relative-caret-position="180">
+              <caret line="12" column="29" lean-forward="false" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#431#432#0" expanded="true" />
@@ -133,6 +131,7 @@
         <option value="$PROJECT_DIR$/src/dunkyboy/util/ListUtils.java" />
         <option value="$PROJECT_DIR$/src/dunkyboy/scratch/ScratchPad.java" />
         <option value="$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestien.java" />
+        <option value="$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestion.java" />
       </list>
     </option>
   </component>
@@ -264,15 +263,15 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.GoogleRngQuestien">
-    <configuration name="GoogleRngQuestien" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Application.GoogleRngQuestion">
+    <configuration name="GoogleRngQuestion" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
           <option name="PATTERN" value="dunkyboy.interviews.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="MAIN_CLASS_NAME" value="dunkyboy.interviews.GoogleRngQuestien" />
+      <option name="MAIN_CLASS_NAME" value="dunkyboy.interviews.GoogleRngQuestion" />
       <option name="VM_PARAMETERS" />
       <option name="PROGRAM_PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -554,11 +553,11 @@
       <item index="0" class="java.lang.String" itemvalue="Application.Scratch" />
       <item index="1" class="java.lang.String" itemvalue="Application.MemoryAllocator" />
       <item index="2" class="java.lang.String" itemvalue="Application.KeyFactoryBenchmark" />
-      <item index="3" class="java.lang.String" itemvalue="Application.GoogleRngQuestien" />
+      <item index="3" class="java.lang.String" itemvalue="Application.GoogleRngQuestion" />
     </list>
     <recent_temporary>
       <list size="3">
-        <item index="0" class="java.lang.String" itemvalue="Application.GoogleRngQuestien" />
+        <item index="0" class="java.lang.String" itemvalue="Application.GoogleRngQuestion" />
         <item index="1" class="java.lang.String" itemvalue="Application.KeyFactoryBenchmark" />
         <item index="2" class="java.lang.String" itemvalue="Application.MemoryAllocator" />
       </list>
@@ -582,12 +581,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1467251668386</updated>
-      <workItem from="1510252554451" duration="893000" />
+      <workItem from="1510252554451" duration="953000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="893000" />
+    <option name="totallyTimeSpent" value="953000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="2560" height="1440" extended-state="0" />
@@ -988,10 +987,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestien.java">
+    <entry file="file://$PROJECT_DIR$/src/dunkyboy/interviews/GoogleRngQuestion.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="3" lean-forward="false" selection-start-line="10" selection-start-column="3" selection-end-line="10" selection-end-column="3" />
+        <state relative-caret-position="180">
+          <caret line="12" column="29" lean-forward="false" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#431#432#0" expanded="true" />
