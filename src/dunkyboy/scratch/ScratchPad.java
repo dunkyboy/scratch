@@ -1,8 +1,9 @@
 package dunkyboy.scratch;
 
-import com.amazonaws.util.CodecUtils;
 import dunkyboy.util.ThreadsafeRunningAverage;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections4.Bag;
+import org.apache.commons.collections4.bag.HashBag;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -27,7 +28,6 @@ public class ScratchPad {
 
 
         testRandomSaltBase64();
-
 //        testHashGenerationRuntime();
 
 
