@@ -13,11 +13,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class GoogleRngQuestion {
 
     public static void main(String[] args) {
-        testGoogleRNG();
-    }
-
-
-    private static void testGoogleRNG() {
         final Bag<Integer> distributions = new HashBag<>();
         for (int i = 0; i < 10000; i++) {
             final int rand = randBetween1And7();
@@ -51,7 +46,7 @@ public class GoogleRngQuestion {
 
     /**
      * This is the function you start with.
-     * 
+     *
      * @return a random int between 1 and 5, inclusive
      */
     private static int randBetween1And5() {
