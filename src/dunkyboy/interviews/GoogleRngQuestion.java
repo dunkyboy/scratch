@@ -49,6 +49,11 @@ public class GoogleRngQuestion {
         }
     }
 
+    /**
+     * This is the function you start with.
+     * 
+     * @return a random int between 1 and 5, inclusive
+     */
     private static int randBetween1And5() {
         return ThreadLocalRandom.current().nextInt(5) + 1;
     }
